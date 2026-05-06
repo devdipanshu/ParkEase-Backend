@@ -1,0 +1,24 @@
+# Frontend
+parkease-angular/
+
+# Build folders
+**/target/
+**/build/
+**/out/
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+
+# Logs
+*.log
+
+# Env / secret files
+.env
+**/.env
+**/application-local.properties
+**/application-secret.properties
+**/application-dev.properties
+
+**/.claude/
