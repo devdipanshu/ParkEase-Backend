@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="300" viewBox="0 0 600 300">
+  <rect width="600" height="300" fill="#0e1019"/>
+  <!-- subtle grid -->
+  <line x1="150" y1="0" x2="150" y2="300" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
+  <line x1="300" y1="0" x2="300" y2="300" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
+  <line x1="450" y1="0" x2="450" y2="300" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
+  <line x1="0" y1="100" x2="600" y2="100" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
+  <line x1="0" y1="200" x2="600" y2="200" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
+  <!-- outer glow ring -->
+  <circle cx="300" cy="148" r="60" fill="rgba(59,130,246,0.06)" stroke="rgba(59,130,246,0.18)" stroke-width="1.5"/>
+  <!-- inner circle -->
+  <circle cx="300" cy="148" r="40" fill="rgba(59,130,246,0.1)" stroke="rgba(59,130,246,0.35)" stroke-width="1"/>
+  <!-- P shape drawn as path for reliability -->
+  <text x="300" y="165" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="44" font-weight="800" fill="#3b82f6" opacity="0.9">P</text>
+  <!-- label -->
+  <text x="300" y="232" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="600" fill="rgba(255,255,255,0.22)" letter-spacing="3">PARKING LOT</text>
+</svg>

@@ -1,0 +1,80 @@
+<div class="container py-4">
+
+  <div class="loading-wrapper" *ngIf="loading">Loading payments...</div>
+
+  <div *ngIf="!loading && error" class="alert alert-danger d-flex align-items-center" role="alert">
+    <mat-icon style="font-size:1.1rem;width:1.1rem;height:1.1rem;margin-right:8px;flex-shrink:0;">error_outline</mat-icon>
+    <span>{{error}}</span>
+    <button class="btn btn-outline-dark btn-sm ms-auto" (click)="loadData()">Retry</button>
+  </div>
+
+  <div *ngIf="!loading && !error">
+
+    <div class="page-header">
+      <h2>Payment History</h2>
+      <p>All your transactions and downloadable receipts.</p>
+    </div>
+
+    <div class="alert alert-danger mb-4" *ngIf="downloadError">{{downloadError}}</div>
+
+    <div *ngIf="payments.length === 0" class="empty-state">
+      <mat-icon class="empty-icon">receipt_long</mat-icon>
+      <h4>No payments yet</h4>
+      <p>Your payment history will appear here after your first checkout.</p>
+    </div>
+
+    <div class="table-responsive" *ngIf="payments.length > 0">
+      <table class="clean-table">
+        <thead>
+          <tr>
+            <th>Transaction ID</th>
+            <th>Booking</th>
+            <th>Amount</th>
+            <th>Mode</th>
+            <th>Status</th>
+            <th>Date</th>
+            <th>Receipt</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let p of payments">
+            <td class="table-id">{{p.transactionId || '—'}}</td>
+            <td><strong>#{{p.bookingId}}</strong></td>
+            <td style="font-weight:700;">Rs. {{p.amount}}</td>
+            <td>
+              <span style="display:inline-flex;align-items:center;gap:4px;font-size:0.85rem;">
+                <mat-icon style="font-size:0.9rem;width:0.9rem;height:0.9rem;color:var(--muted-foreground);">
+                  {{p.mode === 'CARD' ? 'credit_card' : p.mode === 'UPI' ? 'phone_android' : p.mode === 'WALLET' ? 'account_balance_wallet' : p.mode === 'RAZORPAY' ? 'razor' : 'payments'}}
+                </mat-icon>
+                {{p.mode}}
+              </span>
+            </td>
+            <td>
+              <span class="status-badge"
+                [class.badge-completed]="p.status === 'PAID'"
+                [class.badge-cancelled]="p.status === 'FAILED'"
+                [class.badge-reserved]="p.status === 'PENDING'"
+                [class.badge-active]="p.status === 'REFUNDED'">
+                {{p.status}}
+              </span>
+            </td>
+            <td class="table-meta">{{p.paidAt | date:'dd MMM yyyy, hh:mm a'}}</td>
+            <td>
+              <button *ngIf="p.status === 'PAID'"
+                      class="btn btn-sm btn-outline-dark"
+                      [disabled]="downloadingId === p.paymentId"
+                      (click)="downloadReceipt(p.paymentId!, p.transactionId || '')">
+                <span *ngIf="downloadingId !== p.paymentId" style="display:inline-flex;align-items:center;gap:4px;">
+                  <mat-icon style="font-size:0.9rem;width:0.9rem;height:0.9rem;">download</mat-icon>
+                  PDF
+                </span>
+                <span *ngIf="downloadingId === p.paymentId" class="spinner-border spinner-border-sm"></span>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>

@@ -9,26 +9,25 @@ import com.parkease.auth.entity.User;
 import com.parkease.auth.exception.AccountDeactivatedException;
 import com.parkease.auth.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.NoSuchElementException;
-import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
+    private static final String BLACKLIST_PREFIX = "blacklist:";
+
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
     private final BCryptPasswordEncoder passwordEncoder;
-
-    // In-memory token blacklist for logout (replace with Redis in production)
-    private final Set<String> tokenBlacklist = Collections.synchronizedSet(new HashSet<>());
+    private final StringRedisTemplate redisTemplate;
 
     @Override
     @Transactional
@@ -68,13 +67,19 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void logout(String token) {
-        tokenBlacklist.add(token);
+        long ttl = jwtUtil.getExpirationMillis(token);
+        if (ttl > 0) {
+            redisTemplate.opsForValue().set(BLACKLIST_PREFIX + token, "1", ttl, TimeUnit.MILLISECONDS);
+        }
     }
 
     @Override
     public boolean validateToken(String token) {
         try {
-            if (tokenBlacklist.contains(token) || !jwtUtil.isTokenValid(token)) {
+            if (Boolean.TRUE.equals(redisTemplate.hasKey(BLACKLIST_PREFIX + token))) {
+                return false;
+            }
+            if (!jwtUtil.isTokenValid(token)) {
                 return false;
             }
             String email = jwtUtil.extractEmail(token);
@@ -94,7 +99,7 @@ public class AuthServiceImpl implements AuthService {
         String email = jwtUtil.extractEmail(token);
         Long userId = jwtUtil.extractUserId(token);
         String role = jwtUtil.extractRole(token);
-        tokenBlacklist.add(token);
+        logout(token);
         return jwtUtil.generateToken(email, userId, role);
     }
 

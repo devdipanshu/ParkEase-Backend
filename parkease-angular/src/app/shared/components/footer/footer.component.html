@@ -1,0 +1,85 @@
+<footer>
+  <div class="container">
+    <div class="row g-4">
+
+      <!-- Brand col -->
+      <div class="col-lg-4">
+        <div class="footer-brand">
+          <span class="brand-icon">
+            <mat-icon style="font-size:0.9rem;width:0.9rem;height:0.9rem;color:#fff;">local_parking</mat-icon>
+          </span>
+          ParkEase
+        </div>
+        <p class="footer-desc">
+          Smart parking for everyone. Find, book, and manage parking effortlessly — whether you're a driver or a lot owner.
+        </p>
+        <p class="footer-desc mt-3" style="display:flex;flex-direction:column;gap:6px;">
+          <span style="display:flex;align-items:center;gap:6px;">
+            <mat-icon style="font-size:0.9rem;width:0.9rem;height:0.9rem;opacity:0.5;">email</mat-icon>
+            support&#64;parkease.com
+          </span>
+          <span style="display:flex;align-items:center;gap:6px;">
+            <mat-icon style="font-size:0.9rem;width:0.9rem;height:0.9rem;opacity:0.5;">phone</mat-icon>
+            +91-7452976379
+          </span>
+        </p>
+      </div>
+
+      <!-- Product col -->
+      <div class="col-lg-2 col-6">
+        <div class="footer-heading">Product</div>
+        <ng-container *ngIf="isDriver">
+          <a class="footer-link" routerLink="/driver/search-lots">Find Parking</a>
+          <a class="footer-link" routerLink="/driver/my-bookings">My Bookings</a>
+          <a class="footer-link" routerLink="/driver/payments">Payments</a>
+        </ng-container>
+        <ng-container *ngIf="!isLoggedIn">
+          <a class="footer-link" routerLink="/register">Get Started</a>
+          <a class="footer-link" routerLink="/login">Sign In</a>
+        </ng-container>
+        <ng-container *ngIf="isLoggedIn && !isDriver">
+          <a class="footer-link" routerLink="/manager/dashboard">Dashboard</a>
+        </ng-container>
+      </div>
+
+      <!-- For owners col -->
+      <div class="col-lg-2 col-6">
+        <div class="footer-heading">For Owners</div>
+        <ng-container *ngIf="!isLoggedIn">
+          <a class="footer-link" routerLink="/register">Register Lot</a>
+        </ng-container>
+        <ng-container *ngIf="isManager">
+          <a class="footer-link" routerLink="/manager/dashboard">My Lots</a>
+          <a class="footer-link" routerLink="/manager/create-lot">Add Lot</a>
+          <a class="footer-link" routerLink="/manager/revenue">Revenue</a>
+        </ng-container>
+        <ng-container *ngIf="!isManager">
+          <a class="footer-link" routerLink="/learn-more">Learn More</a>
+        </ng-container>
+      </div>
+
+      <!-- Company col -->
+      <div class="col-lg-2 col-6">
+        <div class="footer-heading">Company</div>
+        <a class="footer-link" routerLink="/about">About Us</a>
+        <a class="footer-link" routerLink="/blog">Blog</a>
+        <a class="footer-link" routerLink="/careers">Careers</a>
+      </div>
+
+      <!-- Legal col -->
+      <div class="col-lg-2 col-6">
+        <div class="footer-heading">Legal</div>
+        <a class="footer-link" routerLink="/privacy-policy">Privacy Policy</a>
+        <a class="footer-link" routerLink="/terms">Terms of Service</a>
+        <a class="footer-link" routerLink="/cookies">Cookies</a>
+      </div>
+
+    </div>
+
+    <!-- Bottom bar -->
+    <div class="footer-bottom d-flex justify-content-between flex-wrap gap-2">
+      <span>© {{year}} ParkEase. All rights reserved.</span>
+      <a href="#" class="footer-link d-inline" style="margin:0;">Back to top ↑</a>
+    </div>
+  </div>
+</footer>

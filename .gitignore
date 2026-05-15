@@ -1,5 +1,9 @@
-# Frontend
-parkease-angular/
+# Angular
+parkease-angular/node_modules/
+parkease-angular/dist/
+parkease-angular/.angular/
+parkease-angular/.env
+parkease-angular/*.env.*
 
 # Build folders
 **/target/

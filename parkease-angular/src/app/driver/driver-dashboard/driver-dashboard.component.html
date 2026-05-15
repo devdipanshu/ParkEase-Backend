@@ -1,0 +1,288 @@
+<div class="container py-4">
+
+  <div class="loading-wrapper" *ngIf="loading">Loading your dashboard...</div>
+
+  <div *ngIf="!loading && error" class="alert alert-danger d-flex align-items-center" role="alert">
+    <mat-icon style="font-size:1.1rem;width:1.1rem;height:1.1rem;margin-right:8px;flex-shrink:0;">error_outline</mat-icon>
+    <span>{{error}}</span>
+    <button class="btn btn-outline-dark btn-sm ms-auto" (click)="loadData()">Retry</button>
+  </div>
+
+  <ng-container *ngIf="!loading && !error">
+
+    <!-- Page header -->
+    <div class="page-header d-flex justify-content-between align-items-center">
+      <div>
+        <h2>Welcome back, {{displayName}} 👋</h2>
+        <p>Here's what's happening with your parking today.</p>
+      </div>
+      <a routerLink="/driver/search-lots" class="btn btn-dark-primary">
+        <mat-icon style="font-size:1rem;width:1rem;height:1rem;">search</mat-icon>
+        Find Parking
+      </a>
+    </div>
+
+    <!-- Stat cards -->
+    <div class="row g-3 mb-5">
+      <div class="col-6 col-md-3">
+        <div class="data-card">
+          <div class="data-card-icon">
+            <mat-icon style="font-size:1.2rem;width:1.2rem;height:1.2rem;">calendar_today</mat-icon>
+          </div>
+          <div class="data-card-number">{{totalBookings}}</div>
+          <div class="data-card-label">Total Bookings</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="data-card" style="border-top-color:var(--success);">
+          <div class="data-card-icon" style="background:var(--success-light);color:var(--success);">
+            <mat-icon style="font-size:1.2rem;width:1.2rem;height:1.2rem;">radio_button_checked</mat-icon>
+          </div>
+          <div class="data-card-number">{{activeBookings}}</div>
+          <div class="data-card-label">Active Now</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="data-card" style="border-top-color:var(--muted-foreground);">
+          <div class="data-card-icon" style="background:var(--muted);color:var(--muted-foreground);">
+            <mat-icon style="font-size:1.2rem;width:1.2rem;height:1.2rem;">check_circle</mat-icon>
+          </div>
+          <div class="data-card-number">{{completedBookings}}</div>
+          <div class="data-card-label">Completed</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="data-card" style="border-top-color:var(--warning);">
+          <div class="data-card-icon" style="background:var(--warning-light);color:var(--warning-foreground);">
+            <mat-icon style="font-size:1.2rem;width:1.2rem;height:1.2rem;">notifications</mat-icon>
+          </div>
+          <div class="data-card-number">{{unreadCount}}</div>
+          <div class="data-card-label">Notifications</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── QUICK ACTIONS ── -->
+    <div class="mb-2">
+      <div class="section-label">Quick Actions</div>
+    </div>
+    <div class="row g-3 mb-5">
+      <div class="col-6 col-md-3" *ngFor="let item of quickLinks">
+        <a [routerLink]="item.route" class="feature-card d-block text-decoration-none h-100">
+          <div class="icon-box">
+            <mat-icon style="font-size:1.35rem;width:1.35rem;height:1.35rem;">{{item.icon}}</mat-icon>
+          </div>
+          <h5>{{item.title}}</h5>
+          <p>{{item.desc}}</p>
+        </a>
+      </div>
+    </div>
+
+    <!-- ── CURRENT BOOKING ── -->
+    <div class="mb-2">
+      <div class="section-label">Current Booking</div>
+    </div>
+
+    <!-- No active booking -->
+    <div *ngIf="!activeBooking" class="feature-card mb-5"
+      style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3rem 1rem;gap:16px;text-align:center;">
+      <div style="width:72px;height:72px;border-radius:20px;background:var(--muted);display:flex;align-items:center;justify-content:center;">
+        <mat-icon style="font-size:2.2rem;width:2.2rem;height:2.2rem;color:var(--muted-foreground);">directions_car</mat-icon>
+      </div>
+      <div>
+        <div style="font-weight:700;font-size:1rem;color:var(--foreground);margin-bottom:4px;">No active booking</div>
+        <div style="font-size:0.85rem;color:var(--muted-foreground);">You have no ongoing or reserved bookings right now.</div>
+      </div>
+      <a routerLink="/driver/search-lots" class="btn btn-dark-primary btn-sm">Find Parking</a>
+    </div>
+
+    <!-- Active booking card -->
+    <div *ngIf="activeBooking" class="feature-card mb-5" style="border-left:3px solid var(--primary);">
+      <div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
+        <div>
+          <span class="status-badge"
+            [class.badge-reserved]="activeBooking.status==='RESERVED'"
+            [class.badge-active]="activeBooking.status==='ACTIVE'">
+            {{activeBooking.status}}
+          </span>
+          <span class="table-meta ms-2">Booking #{{activeBooking.bookingId}}</span>
+        </div>
+        <div class="d-flex gap-2">
+          <a [routerLink]="['/driver/my-bookings']" class="btn btn-outline-dark btn-sm">
+            <mat-icon style="font-size:0.9rem;width:0.9rem;height:0.9rem;">open_in_new</mat-icon>
+            Manage
+          </a>
+          <button class="btn btn-sm"
+            style="background:rgba(239,68,68,0.12);color:#f87171;border:1px solid rgba(239,68,68,0.25);"
+            [disabled]="cancellingId === activeBooking.bookingId"
+            (click)="cancelBooking(activeBooking.bookingId!)">
+            <mat-icon style="font-size:0.9rem;width:0.9rem;height:0.9rem;">cancel</mat-icon>
+            {{cancellingId === activeBooking.bookingId ? 'Cancelling...' : 'Cancel'}}
+          </button>
+        </div>
+      </div>
+
+      <div class="row g-3">
+        <div class="col-6 col-md-3">
+          <div class="table-meta" style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">Spot</div>
+          <div style="font-weight:700;font-family:var(--font-display);font-size:1.1rem;color:var(--foreground);">Spot {{activeBooking.spotId}}</div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="table-meta" style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">Type</div>
+          <div style="font-weight:600;color:var(--foreground);">{{activeBooking.bookingType || '—'}}</div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="table-meta" style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">Start</div>
+          <div style="font-weight:600;color:var(--foreground);">{{activeBooking.startTime | date:'dd MMM, h:mm a'}}</div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="table-meta" style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">End</div>
+          <div style="font-weight:600;color:var(--foreground);">{{activeBooking.endTime ? (activeBooking.endTime | date:'dd MMM, h:mm a') : '—'}}</div>
+        </div>
+        <div class="col-6 col-md-3" *ngIf="activeBooking.totalAmount">
+          <div class="table-meta" style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">Amount</div>
+          <div style="font-weight:700;font-family:var(--font-display);font-size:1.1rem;color:var(--primary);">Rs. {{activeBooking.totalAmount}}</div>
+        </div>
+        <div class="col-6 col-md-3" *ngIf="activeBooking.vehiclePlate">
+          <div class="table-meta" style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">Vehicle</div>
+          <div style="font-weight:600;color:var(--foreground);">{{activeBooking.vehiclePlate}}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── NOTIFICATIONS + VEHICLES row ── -->
+    <div class="row g-4 mb-5">
+
+      <!-- Recent Notifications -->
+      <div class="col-md-7">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div class="section-label" style="margin-bottom:0;">Recent Notifications</div>
+          <a routerLink="/driver/notifications" class="view-all-link">View all →</a>
+        </div>
+
+        <div *ngIf="notifications.length === 0" class="feature-card"
+          style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2.5rem 1rem;gap:12px;text-align:center;">
+          <div style="width:56px;height:56px;border-radius:16px;background:var(--muted);display:flex;align-items:center;justify-content:center;">
+            <mat-icon style="font-size:1.8rem;width:1.8rem;height:1.8rem;color:var(--muted-foreground);">notifications_none</mat-icon>
+          </div>
+          <div style="font-size:0.88rem;color:var(--muted-foreground);">No notifications yet</div>
+        </div>
+
+        <div *ngIf="notifications.length > 0" class="feature-card" style="padding:0;overflow:hidden;">
+          <div *ngFor="let n of notifications; let last = last"
+            style="padding:14px 18px;display:flex;gap:12px;align-items:flex-start;"
+            [style.border-bottom]="!last ? '1px solid rgba(255,255,255,0.06)' : 'none'"
+            [style.background]="!n.isRead ? 'rgba(59,130,246,0.04)' : 'transparent'">
+
+            <div style="width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;"
+              [style.background]="!n.isRead ? 'var(--primary-light)' : 'var(--muted)'"
+              [style.color]="!n.isRead ? 'var(--primary)' : 'var(--muted-foreground)'">
+              <mat-icon style="font-size:1rem;width:1rem;height:1rem;">{{getNotificationIcon(n.type)}}</mat-icon>
+            </div>
+
+            <div style="flex:1;min-width:0;">
+              <div style="font-weight:600;font-size:0.88rem;color:var(--foreground);margin-bottom:2px;display:flex;align-items:center;gap:6px;">
+                {{n.title}}
+                <span *ngIf="!n.isRead"
+                  style="width:6px;height:6px;border-radius:50%;background:var(--primary);flex-shrink:0;display:inline-block;"></span>
+              </div>
+              <div style="font-size:0.8rem;color:var(--muted-foreground);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                {{n.message}}
+              </div>
+              <div style="font-size:0.72rem;color:var(--muted-foreground);margin-top:4px;opacity:0.7;">
+                {{timeAgo(n.createdAt)}}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Saved Vehicles -->
+      <div class="col-md-5">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div class="section-label" style="margin-bottom:0;">My Vehicles</div>
+          <a routerLink="/driver/my-vehicles" class="view-all-link">Manage →</a>
+        </div>
+
+        <!-- No vehicles empty state -->
+        <div *ngIf="vehicles.length === 0" class="feature-card"
+          style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2.5rem 1rem;gap:14px;text-align:center;min-height:200px;">
+          <div style="width:64px;height:64px;border-radius:18px;background:var(--muted);display:flex;align-items:center;justify-content:center;">
+            <mat-icon style="font-size:2rem;width:2rem;height:2rem;color:var(--muted-foreground);">directions_car</mat-icon>
+          </div>
+          <div>
+            <div style="font-weight:600;font-size:0.95rem;color:var(--foreground);margin-bottom:4px;">No vehicles added yet</div>
+            <div style="font-size:0.82rem;color:var(--muted-foreground);">Add a vehicle to book parking faster.</div>
+          </div>
+          <a routerLink="/driver/my-vehicles" class="btn btn-dark-primary btn-sm">Add Vehicle</a>
+        </div>
+
+        <div class="d-flex flex-column gap-2" *ngIf="vehicles.length > 0">
+          <div *ngFor="let v of vehicles" class="feature-card"
+            style="padding:14px 16px;display:flex;align-items:center;gap:12px;">
+            <div style="width:40px;height:40px;border-radius:12px;background:var(--primary-light);color:var(--primary);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <mat-icon style="font-size:1.2rem;width:1.2rem;height:1.2rem;">{{getVehicleIcon(v.vehicleType)}}</mat-icon>
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-weight:700;font-size:0.9rem;color:var(--foreground);font-family:var(--font-display);">
+                {{v.make}} {{v.model}}
+              </div>
+              <div style="font-size:0.78rem;color:var(--muted-foreground);margin-top:2px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                <span style="background:var(--muted);padding:1px 8px;border-radius:6px;font-weight:600;letter-spacing:0.05em;">{{v.licensePlate}}</span>
+                <span>{{v.color}}</span>
+                <span *ngIf="v.isEV"
+                  style="background:rgba(34,197,94,0.12);color:#4ade80;padding:1px 7px;border-radius:6px;font-size:0.7rem;font-weight:600;">EV</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── RECENT BOOKINGS ── -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div class="section-label" style="margin-bottom:0;">Recent Bookings</div>
+      <a routerLink="/driver/my-bookings" class="view-all-link">View all →</a>
+    </div>
+
+    <div *ngIf="bookings.length === 0" class="empty-state">
+      <mat-icon class="empty-icon">receipt_long</mat-icon>
+      <h4>No bookings yet</h4>
+      <p>Find a parking spot to get started.</p>
+      <a routerLink="/driver/search-lots" class="btn btn-dark-primary btn-sm">Find Parking</a>
+    </div>
+
+    <div class="table-responsive" *ngIf="bookings.length > 0">
+      <table class="clean-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Spot</th>
+            <th>Status</th>
+            <th>Amount</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let b of bookings | slice:0:5">
+            <td class="table-id">#{{b.bookingId}}</td>
+            <td><strong>Spot {{b.spotId}}</strong></td>
+            <td>
+              <span class="status-badge"
+                [class.badge-reserved]="b.status==='RESERVED'"
+                [class.badge-active]="b.status==='ACTIVE'"
+                [class.badge-completed]="b.status==='COMPLETED'"
+                [class.badge-cancelled]="b.status==='CANCELLED'">
+                {{b.status}}
+              </span>
+            </td>
+            <td>{{b.totalAmount ? 'Rs. ' + b.totalAmount : '—'}}</td>
+            <td class="table-meta">{{b.startTime | date:'dd MMM yyyy'}}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </ng-container>
+</div>

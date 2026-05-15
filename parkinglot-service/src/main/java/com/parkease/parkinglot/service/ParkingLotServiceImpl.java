@@ -6,6 +6,8 @@ import com.parkease.parkinglot.exception.ResourceNotFoundException;
 import com.parkease.parkinglot.repository.ParkingLotRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -18,6 +20,7 @@ public class ParkingLotServiceImpl implements ParkingLotService {
     private final ParkingLotRepository parkingLotRepository;
 
     @Override
+    @CacheEvict(value = {"lots", "lots-approved"}, allEntries = true)
     public ParkingLot createLot(ParkingLotDTO dto) {
         ParkingLot lot = ParkingLot.builder()
                 .name(dto.getName())
@@ -39,6 +42,7 @@ public class ParkingLotServiceImpl implements ParkingLotService {
     }
 
     @Override
+    @Cacheable(value = "lots", key = "#id")
     public ParkingLot getLotById(Long id) {
         return findOrThrow(id);
     }
@@ -54,6 +58,7 @@ public class ParkingLotServiceImpl implements ParkingLotService {
     }
 
     @Override
+    @Cacheable(value = "lots-approved")
     public List<ParkingLot> getAllApprovedLots() {
         return parkingLotRepository.findByIsApprovedTrue();
     }
@@ -62,15 +67,16 @@ public class ParkingLotServiceImpl implements ParkingLotService {
     public List<ParkingLot> getPendingLots() {
         return parkingLotRepository.findByIsApprovedFalse();
     }
+
     @Override
     public List<ParkingLot> getLotsByManager(Long managerId) {
         return parkingLotRepository.findByManagerId(managerId);
     }
 
     @Override
+    @CacheEvict(value = {"lots", "lots-approved"}, allEntries = true)
     public ParkingLot updateLot(Long id, ParkingLotDTO dto) {
         ParkingLot lot = findOrThrow(id);
-
         lot.setName(dto.getName());
         lot.setAddress(dto.getAddress());
         lot.setCity(dto.getCity());
@@ -80,22 +86,20 @@ public class ParkingLotServiceImpl implements ParkingLotService {
         lot.setOpenTime(dto.getOpenTime());
         lot.setCloseTime(dto.getCloseTime());
         lot.setImageUrl(dto.getImageUrl());
-
         if (dto.getIsOpen() != null) {
             lot.setIsOpen(dto.getIsOpen());
         }
-
         if (dto.getTotalSpots() != null && !dto.getTotalSpots().equals(lot.getTotalSpots())) {
             int diff = dto.getTotalSpots() - lot.getTotalSpots();
             lot.setTotalSpots(dto.getTotalSpots());
             lot.setAvailableSpots(Math.max(0, lot.getAvailableSpots() + diff));
         }
-
         log.info("Updating parking lot id: {}", id);
         return parkingLotRepository.save(lot);
     }
 
     @Override
+    @CacheEvict(value = {"lots", "lots-approved"}, allEntries = true)
     public ParkingLot toggleOpen(Long id) {
         ParkingLot lot = findOrThrow(id);
         lot.setIsOpen(!lot.getIsOpen());
@@ -104,6 +108,7 @@ public class ParkingLotServiceImpl implements ParkingLotService {
     }
 
     @Override
+    @CacheEvict(value = {"lots", "lots-approved"}, allEntries = true)
     public ParkingLot approveLot(Long id) {
         ParkingLot lot = findOrThrow(id);
         lot.setIsApproved(true);
@@ -112,6 +117,7 @@ public class ParkingLotServiceImpl implements ParkingLotService {
     }
 
     @Override
+    @CacheEvict(value = {"lots", "lots-approved"}, allEntries = true)
     public ParkingLot decrementAvailable(Long id) {
         ParkingLot lot = findOrThrow(id);
         if (lot.getAvailableSpots() <= 0) {
@@ -122,10 +128,10 @@ public class ParkingLotServiceImpl implements ParkingLotService {
     }
 
     @Override
+    @CacheEvict(value = {"lots", "lots-approved"}, allEntries = true)
     public ParkingLot incrementAvailable(Long id) {
         ParkingLot lot = findOrThrow(id);
         lot.setAvailableSpots(lot.getAvailableSpots() + 1);
-        // Keep totalSpots in sync if available exceeds it (can happen when manager adds spots)
         if (lot.getAvailableSpots() > lot.getTotalSpots()) {
             lot.setTotalSpots(lot.getAvailableSpots());
         }
@@ -133,6 +139,7 @@ public class ParkingLotServiceImpl implements ParkingLotService {
     }
 
     @Override
+    @CacheEvict(value = {"lots", "lots-approved"}, allEntries = true)
     public ParkingLot syncSpotCount(Long id, int totalSpots) {
         ParkingLot lot = findOrThrow(id);
         int diff = totalSpots - lot.getTotalSpots();
@@ -143,6 +150,7 @@ public class ParkingLotServiceImpl implements ParkingLotService {
     }
 
     @Override
+    @CacheEvict(value = {"lots", "lots-approved"}, allEntries = true)
     public void deleteLot(Long id) {
         findOrThrow(id);
         log.info("Deleting parking lot id: {}", id);

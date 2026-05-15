@@ -51,6 +51,11 @@ public class JwtUtil {
         return getClaims(token).get("role", String.class);
     }
 
+    public long getExpirationMillis(String token) {
+        Date expiry = getClaims(token).getExpiration();
+        return Math.max(0, expiry.getTime() - System.currentTimeMillis());
+    }
+
     public boolean isTokenValid(String token) {
         try {
             return !getClaims(token).getExpiration().before(new Date());

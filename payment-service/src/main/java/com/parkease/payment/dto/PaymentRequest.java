@@ -22,4 +22,6 @@ public class PaymentRequest {
 
     private PaymentMode mode;
 
+    private String transactionId;
+
 }

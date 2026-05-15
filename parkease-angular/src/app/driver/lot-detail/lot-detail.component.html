@@ -1,0 +1,214 @@
+<div class="container py-4">
+
+  <div class="loading-wrapper" *ngIf="loading">Loading lot details...</div>
+
+  <ng-container *ngIf="!loading">
+
+    <!-- Lot info card -->
+    <div class="feature-card mb-4" *ngIf="lot">
+      <div class="d-flex justify-content-between align-items-start mb-3">
+        <div>
+          <h3 style="font-size:1.4rem;font-weight:800;letter-spacing:-0.03em;margin:0 0 6px;">{{lot.name}}</h3>
+          <p style="font-size:0.875rem;color:var(--muted-foreground);margin:0;display:flex;align-items:center;gap:4px;">
+            <mat-icon style="font-size:0.9rem;width:0.9rem;height:0.9rem;">place</mat-icon>
+            {{lot.address}}, {{lot.city}}
+          </p>
+        </div>
+        <span class="status-badge"
+          [class.badge-active]="lot.isOpen"
+          [class.badge-cancelled]="!lot.isOpen">
+          {{lot.isOpen ? 'Open' : 'Closed'}}
+        </span>
+      </div>
+
+      <div class="row g-3">
+        <div class="col-4">
+          <div style="background:var(--primary-light);border-radius:10px;padding:12px;text-align:center;">
+            <div style="font-size:1.5rem;font-weight:800;color:var(--primary);letter-spacing:-0.03em;">{{spots.length}}</div>
+            <div style="font-size:0.72rem;color:var(--muted-foreground);text-transform:uppercase;letter-spacing:0.07em;font-weight:600;margin-top:2px;">Available</div>
+          </div>
+        </div>
+        <div class="col-4">
+          <div style="background:var(--muted);border-radius:10px;padding:12px;text-align:center;">
+            <div style="font-size:1.5rem;font-weight:800;color:var(--foreground);letter-spacing:-0.03em;">{{allSpots.length}}</div>
+            <div style="font-size:0.72rem;color:var(--muted-foreground);text-transform:uppercase;letter-spacing:0.07em;font-weight:600;margin-top:2px;">Total</div>
+          </div>
+        </div>
+        <div class="col-4" *ngIf="lot.openTime">
+          <div style="background:var(--muted);border-radius:10px;padding:12px;text-align:center;">
+            <div style="font-size:0.95rem;font-weight:700;color:var(--foreground);">{{lot.openTime}}</div>
+            <div style="font-size:0.72rem;color:var(--muted-foreground);margin-top:2px;">to {{lot.closeTime}}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Spots section -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div class="section-label" style="margin-bottom:0;">Available Spots</div>
+      <button class="btn btn-outline-dark btn-sm" (click)="refreshSpots()">
+        <mat-icon style="font-size:0.9rem;width:0.9rem;height:0.9rem;">refresh</mat-icon>
+        Refresh
+      </button>
+    </div>
+
+    <div *ngIf="spots.length === 0" class="empty-state">
+      <mat-icon class="empty-icon">local_parking</mat-icon>
+      <h4>No available spots</h4>
+      <p>All spots are currently occupied. Try refreshing.</p>
+    </div>
+
+    <div class="table-responsive" *ngIf="spots.length > 0">
+      <table class="clean-table">
+        <thead>
+          <tr>
+            <th>Spot</th><th>Floor</th><th>Type</th><th>Vehicle</th>
+            <th>Price/hr</th><th>EV</th><th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let s of spots">
+            <td><strong>{{s.spotNumber}}</strong></td>
+            <td class="table-meta">{{s.floor}}</td>
+            <td>{{s.spotType}}</td>
+            <td>{{s.vehicleType}}</td>
+            <td style="font-weight:700;">Rs. {{s.pricePerHour}}</td>
+            <td>
+              <span *ngIf="s.isEVCharging" class="status-badge badge-active" style="font-size:0.68rem;">
+                <mat-icon style="font-size:0.8rem;width:0.8rem;height:0.8rem;">bolt</mat-icon> EV
+              </span>
+              <span *ngIf="!s.isEVCharging" class="table-meta">—</span>
+            </td>
+            <td>
+              <button class="btn btn-sm btn-dark-primary" (click)="selectSpot(s)">
+                Book
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Booking form -->
+    <div class="feature-card mt-4" *ngIf="showBookingForm && !showPaymentForm">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+        <div class="icon-box" style="margin-bottom:0;flex-shrink:0;">
+          <mat-icon style="font-size:1.35rem;width:1.35rem;height:1.35rem;">book_online</mat-icon>
+        </div>
+        <div>
+          <div style="font-size:1rem;font-weight:700;letter-spacing:-0.02em;">
+            Book Spot {{selectedSpot?.spotNumber}}
+          </div>
+          <div style="font-size:0.84rem;color:var(--muted-foreground);">
+            Rs. {{selectedSpot?.pricePerHour}}/hr
+          </div>
+        </div>
+      </div>
+
+      <div class="alert alert-danger mb-3" *ngIf="errorMsg">{{errorMsg}}</div>
+
+      <!-- Vehicle selector -->
+      <div *ngIf="vehicles.length > 0" class="mb-4">
+        <label>Select Registered Vehicle <span style="font-weight:400;color:var(--muted-foreground);">(optional)</span></label>
+        <div class="d-flex flex-wrap gap-2 mt-2">
+          <button *ngFor="let v of vehicles"
+                  type="button"
+                  class="btn btn-sm"
+                  [class.btn-dark-primary]="booking.vehiclePlate === v.licensePlate"
+                  [class.btn-outline-dark]="booking.vehiclePlate !== v.licensePlate"
+                  (click)="selectVehicle(v)">
+            <mat-icon style="font-size:0.9rem;width:0.9rem;height:0.9rem;">directions_car</mat-icon>
+            {{v.licensePlate}} ({{v.vehicleType}})
+          </button>
+        </div>
+        <p style="font-size:0.8rem;color:var(--muted-foreground);margin-top:8px;">Or enter details manually below</p>
+      </div>
+
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label>Vehicle Plate</label>
+          <input type="text" class="form-control" [(ngModel)]="booking.vehiclePlate" placeholder="MH01AB1234">
+        </div>
+        <div class="col-md-6">
+          <label>Vehicle Type</label>
+          <select class="form-select" [(ngModel)]="booking.vehicleType">
+            <option value="CAR">Car</option>
+            <option value="MOTORCYCLE">Motorcycle</option>
+            <option value="TRUCK">Truck</option>
+            <option value="VAN">Van</option>
+            <option value="SUV">SUV</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label>Booking Type</label>
+          <select class="form-select" [(ngModel)]="booking.bookingType">
+            <option value="PRE">Pre-booked (Pay Now)</option>
+            <option value="WALK_IN">Walk-In (Pay at Exit)</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label>Start Time</label>
+          <input type="datetime-local" class="form-control" [(ngModel)]="booking.startTime">
+        </div>
+        <div class="col-md-4">
+          <label>End Time</label>
+          <input type="datetime-local" class="form-control" [(ngModel)]="booking.endTime">
+        </div>
+      </div>
+
+      <div class="d-flex gap-2 mt-4">
+        <button class="btn btn-dark-primary" (click)="submitBooking()" [disabled]="submitting">
+          <span *ngIf="submitting" class="spinner-border spinner-border-sm me-1"></span>
+          {{submitting ? 'Booking...' : 'Confirm Booking'}}
+        </button>
+        <button class="btn btn-outline-dark" (click)="showBookingForm = false">Cancel</button>
+      </div>
+    </div>
+
+    <!-- Payment form -->
+    <div class="feature-card mt-4" *ngIf="showPaymentForm">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+        <div class="icon-box" style="margin-bottom:0;flex-shrink:0;background:var(--success-light);color:var(--success);">
+          <mat-icon style="font-size:1.35rem;width:1.35rem;height:1.35rem;">check_circle</mat-icon>
+        </div>
+        <div>
+          <div style="font-size:1rem;font-weight:700;letter-spacing:-0.02em;">Booking Reserved!</div>
+          <div style="font-size:0.84rem;color:var(--muted-foreground);">
+            Booking #{{createdBooking?.bookingId}} — complete payment to secure your spot.
+          </div>
+        </div>
+      </div>
+
+      <!-- Amount summary -->
+      <div style="background:var(--primary-light);border-radius:12px;padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-size:0.75rem;color:var(--muted-foreground);text-transform:uppercase;letter-spacing:0.07em;font-weight:600;margin-bottom:4px;">Amount Due</div>
+          <div style="font-size:1.8rem;font-weight:800;font-family:var(--font-display);color:var(--primary);letter-spacing:-0.03em;">
+            Rs. {{createdBooking?.totalAmount || estimatedAmount}}
+          </div>
+        </div>
+        <mat-icon style="font-size:2rem;width:2rem;height:2rem;color:var(--primary);opacity:0.4;">payments</mat-icon>
+      </div>
+
+      <div class="alert alert-danger mb-3" *ngIf="paymentError" style="font-size:0.875rem;">
+        <mat-icon style="font-size:1rem;width:1rem;height:1rem;vertical-align:middle;margin-right:6px;">error_outline</mat-icon>
+        {{paymentError}}
+      </div>
+
+      <!-- Razorpay button -->
+      <button class="btn btn-dark-primary w-100" style="padding:14px;font-size:1rem;"
+        (click)="openRazorpay()" [disabled]="paymentSubmitting">
+        <span *ngIf="paymentSubmitting" class="spinner-border spinner-border-sm me-2"></span>
+        <mat-icon *ngIf="!paymentSubmitting" style="font-size:1.1rem;width:1.1rem;height:1.1rem;">lock</mat-icon>
+        {{paymentSubmitting ? 'Confirming payment...' : 'Pay securely with Razorpay'}}
+      </button>
+
+      <div style="text-align:center;margin-top:10px;">
+        <button class="btn btn-link" style="font-size:0.8rem;color:var(--muted-foreground);" (click)="cancelPayment()">
+          Pay later from My Bookings
+        </button>
+      </div>
+    </div>
+
+  </ng-container>
+</div>

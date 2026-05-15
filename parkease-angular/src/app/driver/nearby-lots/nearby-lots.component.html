@@ -1,0 +1,86 @@
+<div class="container py-4">
+
+  <div class="loading-wrapper" *ngIf="loading">Searching nearby lots...</div>
+
+  <div *ngIf="!loading && errorMsg" class="alert alert-danger d-flex align-items-center" role="alert">
+    <mat-icon style="font-size:1.1rem;width:1.1rem;height:1.1rem;margin-right:8px;flex-shrink:0;">error_outline</mat-icon>
+    <span>{{errorMsg}}</span>
+  </div>
+
+  <div *ngIf="!loading && !errorMsg">
+
+    <div class="page-header">
+      <h2>{{searchCity ? 'Parking Lots in ' + searchCity : 'Nearby Parking Lots'}}</h2>
+      <p>{{searchCity ? 'Showing all lots in ' + searchCity : 'Showing results based on your location.'}}</p>
+    </div>
+
+    <div *ngIf="lots.length === 0" class="empty-state">
+      <mat-icon class="empty-icon">local_parking</mat-icon>
+      <h4>No parking lots found</h4>
+      <p>Try increasing the search radius or searching a different area.</p>
+      <a routerLink="/driver/search-lots" class="btn btn-dark-primary btn-sm">
+        <mat-icon style="font-size:1rem;width:1rem;height:1rem;">search</mat-icon>
+        Search Again
+      </a>
+    </div>
+
+    <div class="row g-3" *ngIf="lots.length > 0">
+      <div class="col-md-4" *ngFor="let lot of lots">
+        <div class="feature-card h-100 d-flex flex-column" style="padding:0;overflow:hidden;">
+
+          <!-- Lot image -->
+          <div style="height:160px;overflow:hidden;border-radius:14px 14px 0 0;position:relative;">
+            <img
+              [src]="lot.imageUrl || 'lot-placeholder.svg'"
+              [alt]="lot.name"
+              style="width:100%;height:100%;object-fit:cover;"
+              (error)="$any($event.target).src='lot-placeholder.svg'">
+            <div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 50%,rgba(7,8,15,0.7) 100%);"></div>
+            <span class="status-badge"
+              style="position:absolute;top:10px;right:10px;"
+              [class.badge-active]="lot.isOpen"
+              [class.badge-cancelled]="!lot.isOpen">
+              {{lot.isOpen ? 'Open' : 'Closed'}}
+            </span>
+          </div>
+
+          <div style="padding:16px;" class="d-flex flex-column flex-grow-1">
+
+          <h5 style="margin-bottom:6px;font-size:1rem;">{{lot.name}}</h5>
+
+          <p class="table-meta mb-3" style="display:flex;align-items:center;gap:4px;">
+            <mat-icon style="font-size:0.9rem;width:0.9rem;height:0.9rem;">place</mat-icon>
+            {{lot.address}}, {{lot.city}}
+          </p>
+
+          <div class="d-flex gap-3 mb-4">
+            <div style="background:var(--primary-light);border-radius:10px;padding:10px 16px;text-align:center;flex:1;">
+              <div style="font-family:var(--font-display);font-size:1.4rem;font-weight:800;color:var(--primary);letter-spacing:-0.03em;">
+                {{lot.availableSpots}}
+              </div>
+              <div class="table-meta" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.07em;font-weight:600;margin-top:2px;">
+                Available
+              </div>
+            </div>
+            <div style="background:var(--muted);border-radius:10px;padding:10px 16px;text-align:center;flex:1;">
+              <div style="font-family:var(--font-display);font-size:1.4rem;font-weight:800;color:var(--foreground);letter-spacing:-0.03em;">
+                {{lot.totalSpots}}
+              </div>
+              <div class="table-meta" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.07em;font-weight:600;margin-top:2px;">
+                Total
+              </div>
+            </div>
+          </div>
+
+          <a [routerLink]="['/driver/lot', lot.lotId]"
+             class="btn btn-dark-primary btn-sm mt-auto">
+            <mat-icon style="font-size:0.95rem;width:0.95rem;height:0.95rem;">book_online</mat-icon>
+            View &amp; Book
+          </a>
+          </div><!-- /padding wrapper -->
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
