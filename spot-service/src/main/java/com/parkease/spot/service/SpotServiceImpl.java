@@ -79,9 +79,13 @@ public class SpotServiceImpl implements SpotService {
     @Transactional
     public ParkingSpot reserveToOccupied(Long id) {
         ParkingSpot spot = findOrThrow(id);
+        if (spot.getStatus() == SpotStatus.OCCUPIED) {
+            log.warn("Spot {} already OCCUPIED — treating check-in as idempotent", spot.getSpotNumber());
+            return spot;
+        }
         if (spot.getStatus() != SpotStatus.RESERVED) {
             throw new IllegalStateException(
-                    "Spot " + spot.getSpotNumber() + " is not in RESERVED state (current status: " + spot.getStatus() + ")");
+                    "Spot " + spot.getSpotNumber() + " cannot be checked in (current status: " + spot.getStatus() + ")");
         }
         spot.setStatus(SpotStatus.OCCUPIED);
         log.info("Spot {} checked in (RESERVED → OCCUPIED)", spot.getSpotNumber());
@@ -93,8 +97,8 @@ public class SpotServiceImpl implements SpotService {
     public ParkingSpot releaseSpot(Long id) {
         ParkingSpot spot = findOrThrow(id);
         if (spot.getStatus() == SpotStatus.AVAILABLE) {
-            throw new IllegalStateException(
-                    "Spot " + spot.getSpotNumber() + " is already AVAILABLE");
+            log.warn("Spot {} already AVAILABLE — treating release as idempotent", spot.getSpotNumber());
+            return spot;
         }
         spot.setStatus(SpotStatus.AVAILABLE);
         log.info("Spot {} released (→ AVAILABLE)", spot.getSpotNumber());

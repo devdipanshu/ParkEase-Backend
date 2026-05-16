@@ -1,5 +1,6 @@
 package com.parkease.vehicle.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.parkease.vehicle.entity.Vehicle;
 import com.parkease.vehicle.entity.VehicleType;
 import lombok.Builder;
@@ -18,8 +19,10 @@ public class VehicleResponse {
     private String model;
     private String color;
     private VehicleType vehicleType;
+    @JsonProperty("isEV")
     private boolean isEV;
     private LocalDateTime registeredAt;
+    @JsonProperty("isActive")
     private boolean isActive;
 
     public static VehicleResponse from(Vehicle vehicle) {
